@@ -120,9 +120,20 @@
         // Get location and save to Firestore
         function getLocation() {
             if (navigator.geolocation) {
+                // Options to improve accuracy
+                const options = {
+                    enableHighAccuracy: true, // Request higher accuracy
+                    timeout: 10000, // Set a timeout for the request
+                    maximumAge: 0 // Do not use a cached location
+                };
+
                 navigator.geolocation.getCurrentPosition(async (position) => {
                     const latitude = position.coords.latitude;
                     const longitude = position.coords.longitude;
+
+                    console.log("Latitude:", latitude);
+                    console.log("Longitude:", longitude);
+
                     document.getElementById("result").innerHTML = 
                         "Đánh giá đã được cập nhật.";
 
@@ -139,27 +150,31 @@
                     } catch (error) {
                         console.error("Error adding document: ", error);
                     }
-                }, showError);
+                }, showError, options); // Pass options here
             } else {
                 alert("Trình duyệt của bạn không hỗ trợ chức năng này.");
             }
         }
 
         function showError(error) {
+            let message = "";
             switch(error.code) {
                 case error.PERMISSION_DENIED:
-                    alert("Có lỗi xảy ra khi xử lý yêu cầu của bạn. Vui lòng thử lại sau.");
+                    message = "Quyền truy cập vị trí đã bị từ chối. Vui lòng cho phép truy cập.";
                     break;
                 case error.POSITION_UNAVAILABLE:
-                    alert("Dữ liệu hiện không khả dụng. Vui lòng thử lại sau.");
+                    message = "Dữ liệu vị trí không khả dụng. Vui lòng thử lại.";
                     break;
                 case error.TIMEOUT:
-                    alert("Quá trình xử lý bị gián đoạn. Vui lòng thử lại.");
+                    message = "Yêu cầu lấy vị trí đã hết thời gian chờ. Vui lòng thử lại.";
                     break;
                 case error.UNKNOWN_ERROR:
-                    alert("Đã xảy ra một lỗi không xác định. Vui lòng thử lại.");
+                    message = "Đã xảy ra lỗi không xác định. Vui lòng thử lại.";
                     break;
             }
+            alert(message);
+            document.getElementById("result").innerHTML = message;
+            document.getElementById("result").classList.remove("success");
         }
 
         // Automatically get location when the page loads
