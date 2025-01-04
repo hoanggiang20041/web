@@ -24,11 +24,21 @@
 
     #reader {
       width: 300px;
+      height: 300px;
       margin: 20px auto;
       border: 2px dashed #0077b6;
       border-radius: 8px;
       background-color: #ffffff;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #reader div {
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     #amount {
@@ -84,7 +94,9 @@
   <p>Scan the QR code below to proceed with your payment.</p>
 
   <!-- QR Code Scanner -->
-  <div id="reader"></div>
+  <div id="reader">
+    <p>Loading scanner...</p>
+  </div>
 
   <!-- Scanned Amount -->
   <div id="amount"></div>
@@ -107,15 +119,27 @@
     const errorMessage = document.getElementById("errorMessage");
     let scannedData = "";
 
-    // Initialize the QR Code scanner
-    const html5QrCode = new Html5Qrcode("reader");
+    // Check camera permissions and start the scanner
+    async function checkCameraPermissionsAndStart() {
+      try {
+        // Request camera permissions
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream.getTracks().forEach(track => track.stop()); // Stop the stream after checking permissions
+        startScanner(); // Start the scanner if permissions are granted
+      } catch (err) {
+        errorMessage.innerHTML = `Camera access denied: ${err.message}. Please check your browser settings.`;
+      }
+    }
 
+    // Initialize the QR Code scanner
     function startScanner() {
+      const html5QrCode = new Html5Qrcode("reader");
+
       html5QrCode.start(
         { facingMode: "environment" }, // Use the back camera
         {
           fps: 10, // Frames per second
-          qrbox: { width: 300, height: 300 } // Size of the scanning box
+          qrbox: { width: 250, height: 250 } // Size of the scanning box
         },
         (decodedText) => {
           // Stop the scanner after decoding the QR code
@@ -127,11 +151,11 @@
           confirmButton.style.display = "block"; // Show the confirm button
           errorMessage.innerHTML = ""; // Clear any previous error messages
         },
-        (error) => {
-          console.warn("Scanning error:", error);
+        (errorMessage) => {
+          console.warn("Scanning error:", errorMessage);
         }
       ).catch((err) => {
-        // Display error message if the scanner fails to start
+        // Handle errors during scanner initialization
         errorMessage.innerHTML = `Error starting scanner: ${err.message}. Please check camera permissions.`;
         console.error("Error starting the scanner:", err);
       });
@@ -153,8 +177,8 @@
         });
     });
 
-    // Start the scanner
-    startScanner();
+    // Start the process
+    checkCameraPermissionsAndStart();
   </script>
 </body>
 
