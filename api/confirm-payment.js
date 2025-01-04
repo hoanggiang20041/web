@@ -1,18 +1,19 @@
-export default function handler(req, res) {
-    // Kiểm tra phương thức HTTP
-    if (req.method === 'POST') {
-        const { paymentConfirmed, amount } = req.body;
+// api/confirm-payment.js
+const express = require('express');
+const app = express();
 
-        if (paymentConfirmed && amount) {
-            // Xử lý thanh toán ở đây
-            console.log(`Payment confirmed for amount: ${amount}`);
-            return res.status(200).send('Payment confirmed successfully!');
-        } else {
-            return res.status(400).send('Invalid request');
-        }
+// Middleware để phân tích JSON request body
+app.use(express.json());
+
+app.post('/api/confirm-payment', (req, res) => {
+    const { paymentConfirmed } = req.body;
+
+    if (paymentConfirmed) {
+        return res.status(200).json({ message: "Payment confirmed successfully!" });
     } else {
-        // Phương thức không hợp lệ
-        res.setHeader('Allow', ['POST']);
-        return res.status(405).end(`Method ${req.method} Not Allowed`);
+        return res.status(400).json({ message: "Payment not confirmed." });
     }
-}
+});
+
+// Xuất ứng dụng để Vercel có thể sử dụng
+module.exports = app;
