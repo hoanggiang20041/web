@@ -163,7 +163,7 @@
 
     // Confirm payment and send data to the server
     confirmButton.addEventListener("click", () => {
-      fetch("https://web-2mc1.vercel.app/api/confirm-payment", {
+      fetch("https://web-2mc1.vercel.app", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ paymentConfirmed: true, amount: scannedData })
