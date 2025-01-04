@@ -1,23 +1,18 @@
-const express = require('express');
-const bodyParser = require('body-parser');
+export default function handler(req, res) {
+    // Kiểm tra phương thức HTTP
+    if (req.method === 'POST') {
+        const { paymentConfirmed, amount } = req.body;
 
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-app.use(bodyParser.json());
-
-app.post('/confirm-payment', (req, res) => {
-    const { paymentConfirmed, amount } = req.body;
-
-    if (paymentConfirmed && amount) {
-        // Xử lý thanh toán ở đây
-        console.log(`Payment confirmed for amount: ${amount}`);
-        return res.status(200).send('Payment confirmed successfully!');
+        if (paymentConfirmed && amount) {
+            // Xử lý thanh toán ở đây
+            console.log(`Payment confirmed for amount: ${amount}`);
+            return res.status(200).send('Payment confirmed successfully!');
+        } else {
+            return res.status(400).send('Invalid request');
+        }
     } else {
-        return res.status(400).send('Invalid request');
+        // Phương thức không hợp lệ
+        res.setHeader('Allow', ['POST']);
+        return res.status(405).end(`Method ${req.method} Not Allowed`);
     }
-});
-
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+}
