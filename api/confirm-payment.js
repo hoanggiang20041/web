@@ -1,19 +1,15 @@
 // api/confirm-payment.js
-const express = require('express');
-const app = express();
+module.exports = (req, res) => {
+    if (req.method === 'POST') {
+        const { paymentConfirmed } = req.body;
 
-// Middleware to parse JSON request body
-app.use(express.json());
-
-app.post('/api/confirm-payment', (req, res) => {
-    const { paymentConfirmed } = req.body;
-
-    if (paymentConfirmed) {
-        return res.status(200).json({ message: "Payment confirmed successfully!" });
+        if (paymentConfirmed) {
+            return res.status(200).json({ message: "Payment confirmed successfully!" });
+        } else {
+            return res.status(400).json({ message: "Payment not confirmed." });
+        }
     } else {
-        return res.status(400).json({ message: "Payment not confirmed." });
+        res.setHeader('Allow', ['POST']);
+        return res.status(405).end(`Method ${req.method} Not Allowed`);
     }
-});
-
-// Export the application for Vercel to use
-module.exports = app;
+};
