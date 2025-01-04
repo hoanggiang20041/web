@@ -1,10 +1,9 @@
-// api/confirm-payment.js
 module.exports = (req, res) => {
     if (req.method === 'POST') {
-        const { paymentConfirmed } = req.body;
+        const { paymentConfirmed, amount } = req.body; // Lấy thông tin từ body
 
         if (paymentConfirmed) {
-            return res.status(200).json({ message: "Payment confirmed successfully!" });
+            return res.status(200).json({ message: `Payment of ${amount} confirmed successfully!` });
         } else {
             return res.status(400).json({ message: "Payment not confirmed." });
         }
