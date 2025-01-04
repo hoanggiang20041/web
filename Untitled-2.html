@@ -7,12 +7,6 @@
   <title>Bank QR Code Payment</title>
   <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
   <style>
-    /* Reset some default browser styling */
-    body, h1, button {
-      margin: 0;
-      padding: 0;
-    }
-    
     body {
       font-family: 'Arial', sans-serif;
       background-color: #f5f5f5;
@@ -77,6 +71,11 @@
     .footer a:hover {
       text-decoration: underline;
     }
+
+    .error {
+      color: red;
+      margin-top: 20px;
+    }
   </style>
 </head>
 
@@ -90,6 +89,9 @@
   <!-- Scanned Amount -->
   <div id="amount"></div>
 
+  <!-- Error Message -->
+  <div id="errorMessage" class="error"></div>
+
   <!-- Confirm Button -->
   <button id="confirmButton" style="display: none;">Confirm Payment</button>
 
@@ -102,6 +104,7 @@
     const amountElement = document.getElementById("amount");
     const confirmButton = document.getElementById("confirmButton");
     const readerElement = document.getElementById("reader");
+    const errorMessage = document.getElementById("errorMessage");
     let scannedData = "";
 
     // Initialize the QR Code scanner
@@ -112,7 +115,7 @@
         { facingMode: "environment" }, // Use the back camera
         {
           fps: 10, // Frames per second
-          qrbox: { width: 250, height: 250 } // Size of the scanning box
+          qrbox: { width: 300, height: 300 } // Size of the scanning box
         },
         (decodedText) => {
           // Stop the scanner after decoding the QR code
@@ -122,11 +125,14 @@
           // Display the scanned data (e.g., total amount)
           amountElement.innerHTML = `<strong>Scanned Amount:</strong> ${decodedText}`;
           confirmButton.style.display = "block"; // Show the confirm button
+          errorMessage.innerHTML = ""; // Clear any previous error messages
         },
         (error) => {
           console.warn("Scanning error:", error);
         }
       ).catch((err) => {
+        // Display error message if the scanner fails to start
+        errorMessage.innerHTML = `Error starting scanner: ${err.message}. Please check camera permissions.`;
         console.error("Error starting the scanner:", err);
       });
     }
