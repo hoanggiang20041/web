@@ -5,7 +5,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bank QR Code Payment</title>
-  <!-- Thay thế URL thư viện bằng CDN đáng tin cậy -->
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode/minified/html5-qrcode.min.js"></script>
   <style>
     body {
@@ -36,12 +35,6 @@
       justify-content: center;
     }
 
-    #reader div {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
     #amount {
       font-size: 20px;
       margin: 20px 0;
@@ -65,24 +58,6 @@
       box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
     }
 
-    .footer {
-      margin-top: 30px;
-      padding: 10px;
-      border-top: 1px solid #ddd;
-      background-color: #fafafa;
-      font-size: 14px;
-      color: #777;
-    }
-
-    .footer a {
-      text-decoration: none;
-      color: #0077b6;
-    }
-
-    .footer a:hover {
-      text-decoration: underline;
-    }
-
     .error {
       color: red;
       margin-top: 20px;
@@ -94,90 +69,69 @@
   <h1>QR Code Payment</h1>
   <p>Scan the QR code below to proceed with your payment.</p>
 
-  <!-- QR Code Scanner -->
   <div id="reader">
     <p>Loading scanner...</p>
   </div>
 
-  <!-- Scanned Amount -->
   <div id="amount"></div>
-
-  <!-- Error Message -->
   <div id="errorMessage" class="error"></div>
-
-  <!-- Confirm Button -->
   <button id="confirmButton" style="display: none;">Confirm Payment</button>
-
-  <!-- Footer -->
-  <div class="footer">
-    Powered by <a href="#">YourBank</a>. Safe and Secure Transactions.
-  </div>
 
   <script>
     const amountElement = document.getElementById("amount");
     const confirmButton = document.getElementById("confirmButton");
-    const readerElement = document.getElementById("reader");
     const errorMessage = document.getElementById("errorMessage");
     let scannedData = "";
 
-    // Check camera permissions and initialize the scanner
     async function checkCameraPermissionsAndStart() {
       try {
-        // Request camera permissions
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        stream.getTracks().forEach(track => track.stop()); // Stop the stream after checking permissions
-        startScanner(); // Start the scanner if permissions are granted
+        stream.getTracks().forEach(track => track.stop());
+        startScanner();
       } catch (err) {
         errorMessage.innerHTML = `Camera access denied: ${err.message}. Please check your browser settings.`;
       }
     }
 
-    // Start QR Code Scanner
     function startScanner() {
       const html5QrCode = new Html5Qrcode("reader");
 
       html5QrCode.start(
-        { facingMode: "environment" }, // Use back camera
+        { facingMode: "environment" },
         {
-          fps: 10, // Frames per second
-          qrbox: { width: 250, height: 250 } // Size of the scanning box
+          fps: 10,
+          qrbox: { width: 250, height: 250 }
         },
         (decodedText) => {
-          // Stop the scanner after decoding the QR code
           html5QrCode.stop();
           scannedData = decodedText;
-
-          // Display the scanned data (e.g., total amount)
           amountElement.innerHTML = `<strong>Scanned Amount:</strong> ${decodedText}`;
-          confirmButton.style.display = "block"; // Show the confirm button
-          errorMessage.innerHTML = ""; // Clear any previous error messages
+          confirmButton.style.display = "block";
+          errorMessage.innerHTML = "";
         },
         (errorMessage) => {
           console.warn("Scanning error:", errorMessage);
         }
       ).catch((err) => {
         errorMessage.innerHTML = `Error starting scanner: ${err.message}. Please check if your camera is working.`;
-        console.error("Scanner error:", err);
       });
     }
 
-    // Confirm payment and send data to the server
     confirmButton.addEventListener("click", () => {
       fetch("https://web-2mc1.vercel.app/api/confirm-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ paymentConfirmed: true, amount: scannedData })
       })
-        .then((response) => response.text())
+        .then((response) => response.json())
         .then((data) => {
-          alert("Payment confirmed successfully!");
+          alert(data.message);
         })
         .catch((error) => {
           console.error("Error:", error);
         });
     });
 
-    // Start the scanner process
     checkCameraPermissionsAndStart();
   </script>
 </body>
