@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bank QR Code Payment</title>
+  <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+  <style>
+    /* Reset some default browser styling */
+    body, h1, button {
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      color: #0077b6;
+      margin-top: 20px;
+      font-size: 24px;
+    }
+
+    #reader {
+      width: 300px;
+      margin: 20px auto;
+      border: 2px dashed #0077b6;
+      border-radius: 8px;
+      background-color: #ffffff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #amount {
+      font-size: 20px;
+      margin: 20px 0;
+      color: #0077b6;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #0077b6;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+
+    button:hover {
+      background-color: #005f8a;
+      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .footer {
+      margin-top: 30px;
+      padding: 10px;
+      border-top: 1px solid #ddd;
+      background-color: #fafafa;
+      font-size: 14px;
+      color: #777;
+    }
+
+    .footer a {
+      text-decoration: none;
+      color: #0077b6;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>QR Code Payment</h1>
+  <p>Scan the QR code below to proceed with your payment.</p>
+
+  <!-- QR Code Scanner -->
+  <div id="reader"></div>
+
+  <!-- Scanned Amount -->
+  <div id="amount"></div>
+
+  <!-- Confirm Button -->
+  <button id="confirmButton" style="display: none;">Confirm Payment</button>
+
+  <!-- Footer -->
+  <div class="footer">
+    Powered by <a href="#">YourBank</a>. Safe and Secure Transactions.
+  </div>
+
+  <script>
+    const amountElement = document.getElementById("amount");
+    const confirmButton = document.getElementById("confirmButton");
+    const readerElement = document.getElementById("reader");
+    let scannedData = "";
+
+    // Initialize the QR Code scanner
+    const html5QrCode = new Html5Qrcode("reader");
+
+    function startScanner() {
+      html5QrCode.start(
+        { facingMode: "environment" }, // Use the back camera
+        {
+          fps: 10, // Frames per second
+          qrbox: { width: 250, height: 250 } // Size of the scanning box
+        },
+        (decodedText) => {
+          // Stop the scanner after decoding the QR code
+          html5QrCode.stop();
+          scannedData = decodedText;
+
+          // Display the scanned data (e.g., total amount)
+          amountElement.innerHTML = `<strong>Scanned Amount:</strong> ${decodedText}`;
+          confirmButton.style.display = "block"; // Show the confirm button
+        },
+        (error) => {
+          console.warn("Scanning error:", error);
+        }
+      ).catch((err) => {
+        console.error("Error starting the scanner:", err);
+      });
+    }
+
+    // Confirm payment and send data to the server
+    confirmButton.addEventListener("click", () => {
+      fetch("http://localhost:5000/confirm-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentConfirmed: true, amount: scannedData })
+      })
+        .then((response) => response.text())
+        .then((data) => {
+          alert("Payment confirmed successfully!");
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    });
+
+    // Start the scanner
+    startScanner();
+  </script>
+</body>
+
+</html>
