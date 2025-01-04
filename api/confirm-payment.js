@@ -2,7 +2,7 @@
 const express = require('express');
 const app = express();
 
-// Middleware để phân tích JSON request body
+// Middleware to parse JSON request body
 app.use(express.json());
 
 app.post('/api/confirm-payment', (req, res) => {
@@ -15,5 +15,5 @@ app.post('/api/confirm-payment', (req, res) => {
     }
 });
 
-// Xuất ứng dụng để Vercel có thể sử dụng
+// Export the application for Vercel to use
 module.exports = app;
