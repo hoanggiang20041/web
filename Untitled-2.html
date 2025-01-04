@@ -78,86 +78,86 @@
   <button id="confirmButton" style="display: none;">Confirm Payment</button>
 
   <script>
-   const amountElement = document.getElementById("amount");
-const confirmButton = document.getElementById("confirmButton");
-const errorMessage = document.getElementById("errorMessage");
-let scannedData = "";
+    const amountElement = document.getElementById("amount");
+    const confirmButton = document.getElementById("confirmButton");
+    const errorMessage = document.getElementById("errorMessage");
+    let scannedData = "";
 
-async function checkCameraPermissionsAndStart() {
-    try {
+    async function checkCameraPermissionsAndStart() {
+      try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         stream.getTracks().forEach(track => track.stop());
         startScanner();
-    } catch (err) {
+      } catch (err) {
         errorMessage.innerHTML = `Camera access denied: ${err.message}. Please check your browser settings.`;
+      }
     }
-}
 
-function startScanner() {
-    const html5QrCode = new Html5Qrcode("reader");
-    html5QrCode.start(
+    function startScanner() {
+      const html5QrCode = new Html5Qrcode("reader");
+      html5QrCode.start(
         { facingMode: "environment" },
         {
-            fps: 10,
-            qrbox: { width: 250, height: 250 }
+          fps: 10,
+          qrbox: { width: 250, height: 250 }
         },
         (decodedText) => {
-            try {
-                // Validate the scanned data format
-                const paymentData = JSON.parse(decodedText);
-                if (!paymentData.amount) {
-                    throw new Error("Invalid QR code format");
-                }
-                
-                html5QrCode.stop();
-                scannedData = paymentData.amount;
-                amountElement.innerHTML = `<strong>Scanned Amount:</strong> ${paymentData.amount}`;
-                confirmButton.style.display = "block";
-                errorMessage.innerHTML = "";
-            } catch (err) {
-                errorMessage.innerHTML = "Invalid QR code format. Please scan a valid payment QR code.";
+          try {
+            // Validate the scanned data format
+            const paymentData = JSON.parse(decodedText);
+            if (!paymentData.amount) {
+              throw new Error("Invalid QR code format");
             }
+            
+            html5QrCode.stop(); // Stop scanning after successful scan
+            scannedData = paymentData.amount;
+            amountElement.innerHTML = `<strong>Scanned Amount:</strong> ${paymentData.amount}`;
+            confirmButton.style.display = "block";
+            errorMessage.innerHTML = "";
+          } catch (err) {
+            errorMessage.innerHTML = "Invalid QR code format. Please scan a valid payment QR code.";
+          }
         },
         (error) => {
-            console.warn("Scanning error:", error);
+          console.warn("Scanning error:", error);
+          errorMessage.innerHTML = "Scanning error. Please try again.";
         }
-    ).catch((err) => {
+      ).catch((err) => {
         errorMessage.innerHTML = `Error starting scanner: ${err.message}. Please check if your camera is working.`;
-    });
-}
+      });
+    }
 
-confirmButton.addEventListener("click", async () => {
-    try {
+    confirmButton.addEventListener("click", async () => {
+      try {
         confirmButton.disabled = true;
         errorMessage.innerHTML = "Processing payment...";
         
         const response = await fetch("https://web-2mc1.vercel.app/api/confirm-payment", {
-            method: "POST",
-            headers: { 
-                "Content-Type": "application/json",
-                // Add any necessary authentication headers here
-            },
-            body: JSON.stringify({ 
-                paymentConfirmed: true, 
-                amount: scannedData 
-            })
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ 
+            paymentConfirmed: true, 
+            amount: scannedData 
+          })
         });
 
         if (!response.ok) {
-            throw new Error(`Payment failed: ${response.statusText}`);
+          throw new Error(`Payment failed: ${response.statusText}`);
         }
 
         const data = await response.json();
         alert(data.message);
         // Optionally redirect to success page
         // window.location.href = '/success.html';
-    } catch (error) {
+      } catch (error) {
         errorMessage.innerHTML = `Payment failed: ${error.message}`;
         confirmButton.disabled = false;
-    }
-});
+      }
+    });
 
-checkCameraPermissionsAndStart();
+    checkCameraPermissionsAndStart();
   </script>
 </body>
 
